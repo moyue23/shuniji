@@ -1,7 +1,55 @@
-# Tauri + React + Typescript
+# Shuniji — 本地表情包管理器
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+Shuniji 是一款完全本地运行的桌面表情包管理工具，专为 PC 端高频使用自定义表情包的用户设计。通过可视化面板，你可以自由导入、分组、调用图片表情，一键复制到剪贴板，粘贴到任意聊天软件（如 QQ、微信、Discord 等）。
 
-## Recommended IDE Setup
+## 核心功能
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- **图片上传**：导入本地图片作为自定义表情包
+- **分组管理**：创建、删除、重命名表情分组，自由组织你的表情库
+- **本地存储**：所有表情包与分组数据保存在本地 SQLite 数据库，无需联网，不依赖云端
+- **一键复制**：点击表情即可复制到剪贴板，随点随贴
+- **可视化面板**：清晰展示分组与表情，浏览查找一目了然
+
+## 额外功能（可选）
+
+- 拖拽排序分组/表情
+- 快捷键快速调用表情
+- 数据导出/导入，方便备份与迁移
+
+## 技术栈
+
+- **框架**：[Tauri](https://tauri.app/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **构建工具**：Vite
+- **数据存储**：SQLite（本地）
+
+## 目标用户
+
+- 拥有大量自定义表情包，需要系统化管理的人
+- 习惯在 PC 端聊天，希望快速调用表情的人
+- 偏好本地工具、不愿将表情数据上传至云端的用户
+
+## 关键差异化
+
+- **完全本地管理**：数据仅存于本地，隐私可控
+- **自由分组**：支持多级自定义分组，突破平台限制
+- **跨聊天软件通用**：不绑定任何官方表情平台，复制即用
+
+## 使用方法
+
+### 安装依赖
+
+```bash
+pnpm install
+```
+
+### 启动开发环境
+
+```bash
+pnpm tauri dev
+```
+
+### 构建
+
+```bash
+pnpm tauri build
+```
