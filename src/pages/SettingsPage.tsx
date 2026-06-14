@@ -58,7 +58,7 @@ export default function SettingsPage() {
             {THEME_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
-                className={`px-3.5 py-1.25 border-none rounded-sm bg-transparent cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:text-text-main ${theme === opt.value ? "bg-primary text-on-primary shadow-sm" : "text-text-muted"}`}
+                className={`px-3.5 py-1.25 border-none rounded-sm cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:text-text-main ${theme === opt.value ? "bg-primary text-on-primary shadow-sm" : "bg-transparent text-text-muted"}`}
                 onClick={() => {
                   setThemeState(opt.value);
                   setTheme(opt.value);

@@ -1,21 +1,21 @@
-
 import React, { createContext, useContext, useReducer, useCallback } from "react";
 import type { Sticker, StickerGroup, AppSettings } from "../types";
 import * as api from "../utils/tauri";
 
 interface AppState {
   groups: StickerGroup[];
-  currentGroupId: number;
+  currentGroupId: number | null;
   stickers: Sticker[];
   editMode: boolean;
   searchKeyword: string;
   settings: AppSettings | null;
   loading: boolean;
+  detailStickerId: number | null;
 }
 
 type Action =
   | { type: "SET_GROUPS"; payload: StickerGroup[] }
-  | { type: "SET_CURRENT_GROUP"; payload: number }
+  | { type: "SET_CURRENT_GROUP"; payload: number | null }
   | { type: "SET_STICKERS"; payload: Sticker[] }
   | { type: "TOGGLE_EDIT_MODE" }
   | { type: "SET_SEARCH_KEYWORD"; payload: string }
@@ -26,16 +26,18 @@ type Action =
   | { type: "UPDATE_GROUP"; payload: StickerGroup }
   | { type: "ADD_STICKER"; payload: Sticker }
   | { type: "REMOVE_STICKER"; payload: number }
-  | { type: "UPDATE_STICKER"; payload: Sticker };
+  | { type: "UPDATE_STICKER"; payload: Sticker }
+  | { type: "SET_DETAIL_STICKER"; payload: number | null };
 
 const initialState: AppState = {
   groups: [],
-  currentGroupId: 0,
+  currentGroupId: null,
   stickers: [],
   editMode: false,
   searchKeyword: "",
   settings: null,
   loading: false,
+  detailStickerId: null,
 };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -82,6 +84,8 @@ function reducer(state: AppState, action: Action): AppState {
           s.id === action.payload.id ? action.payload : s
         ),
       };
+    case "SET_DETAIL_STICKER":
+      return { ...state, detailStickerId: action.payload };
     default:
       return state;
   }
@@ -122,7 +126,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAll = useCallback(async () => {
     await loadGroups();
-    await loadStickers(state.currentGroupId || undefined);
+    await loadStickers(state.currentGroupId ?? undefined);
   }, [loadGroups, loadStickers, state.currentGroupId]);
 
   return (
