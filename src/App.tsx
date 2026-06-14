@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus, Search } from "lucide-react";
 import { useApp } from "./context/AppContext";
 import * as api from "./utils/tauri";
 import Sidebar from "./components/Layout/Sidebar";
@@ -77,10 +77,13 @@ function App() {
         <header className="header">
           <div className="header-left">
             <button className="header-btn" onClick={handleAddSticker}>
-              + Sticker
+              <Plus size={18} /> Sticker
             </button>
           </div>
           <div className="header-center">
+            <span className="search-icon">
+              <Search size={20} />
+            </span>
             <input
               className="search-input"
               value={search}
@@ -93,7 +96,7 @@ function App() {
               className={`header-btn edit-btn ${state.editMode ? "active" : ""}`}
               onClick={() => dispatch({ type: "TOGGLE_EDIT_MODE" })}
             >
-              <Pencil size={14} /> Edit
+              <Pencil size={16} /> Edit
             </button>
           </div>
         </header>

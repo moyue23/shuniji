@@ -17,7 +17,6 @@ interface Props {
 
 export default function StickerItem({ sticker, onReorder }: Props) {
   const { state, dispatch } = useApp();
-  const [hover, setHover] = useState(false);
   const [selected, setSelected] = useState(false);
   const [imgError, setImgError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -74,8 +73,6 @@ export default function StickerItem({ sticker, onReorder }: Props) {
   return (
     <div
       className={`sticker-item ${selected ? "selected" : ""} ${state.editMode ? "edit" : ""}`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       onClick={() => {
         if (state.editMode) return;
         setSelected(true);
@@ -102,32 +99,23 @@ export default function StickerItem({ sticker, onReorder }: Props) {
         await onReorder(Number(draggedId), sticker.id);
       }}
     >
-      <div className="sticker-item-img-wrap">
-        {imgError ? (
-          <span className="sticker-item-placeholder"><ImageOff size={28} /></span>
-        ) : (
-          <>
-            <img
-              ref={imgRef}
-              src={imgSrc}
-              alt={sticker.tags}
-              className="sticker-item-img"
-              style={{ display: hover && isGif ? "none" : "block" }}
-              onError={() => setImgError(true)}
-            />
-            {isGif && hover && (
-              <img
-                src={imgSrc}
-                alt={sticker.tags}
-                className="sticker-item-img"
-                style={{ display: "block" }}
-                onError={() => setImgError(true)}
-              />
-            )}
-          </>
-        )}
-      </div>
-      {state.editMode && (
+      {imgError ? (
+        <div className="sticker-item-placeholder">
+          <ImageOff size={48} />
+        </div>
+      ) : (
+        <img
+          ref={imgRef}
+          src={imgSrc}
+          alt={sticker.tags}
+          className="sticker-item-img"
+          onError={() => setImgError(true)}
+        />
+      )}
+      {isGif && (
+        <div className="sticker-item-name">GIF</div>
+      )}
+      {state.editMode && !isGif && (
         <div className="sticker-item-name">{sticker.tags || "Untitled"}</div>
       )}
     </div>

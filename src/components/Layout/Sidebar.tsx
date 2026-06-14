@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Folder, Images, Settings } from "lucide-react";
+import { Folder, Images, Plus, Settings } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import * as api from "../../utils/tauri";
 
@@ -61,7 +61,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-top">
         <button className="sidebar-btn" onClick={() => setAdding(!adding)}>
-          + Group
+          <Plus size={18} /> Group
         </button>
         {adding && (
           <div className="sidebar-add-group">

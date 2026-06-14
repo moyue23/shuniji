@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { Trash2 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import * as api from "../../utils/tauri";
 import StickerItem from "./StickerItem";
@@ -61,7 +62,7 @@ export default function StickerGrid() {
           onDrop={handleDeleteDrop}
           onDragOver={handleDragOver}
         >
-          🗑️ Drag here to delete
+          <Trash2 size={18} /> Drag here to delete
         </div>
       )}
     </div>
