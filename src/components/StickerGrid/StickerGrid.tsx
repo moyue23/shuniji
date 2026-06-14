@@ -46,19 +46,19 @@ export default function StickerGrid() {
   };
 
   return (
-    <div className="sticker-grid-wrap" onDragOver={handleDragOver}>
-      {state.loading && <div className="loading">Loading...</div>}
+    <div className="min-h-full" onDragOver={handleDragOver}>
+      {state.loading && <div className="text-center px-10 py-20 text-text-muted text-base font-medium">Loading...</div>}
       {!state.loading && state.stickers.length === 0 && (
-        <div className="empty">No stickers yet. Drag images here or use "+ Sticker".</div>
+        <div className="text-center px-10 py-20 text-text-muted text-base font-medium">No stickers yet. Drag images here or use "+ Sticker".</div>
       )}
-      <div className="sticker-grid">
+      <div className="sticker-grid gap-6">
         {state.stickers.map((sticker) => (
           <StickerItem key={sticker.id} sticker={sticker} onReorder={handleReorder} />
         ))}
       </div>
       {state.editMode && (
         <div
-          className="delete-zone"
+          className="mt-8 p-8 border-2 border-dashed border-[rgba(186,26,26,0.4)] rounded-xl text-center text-error text-sm font-semibold bg-error-container transition-all duration-200 flex items-center justify-center gap-2 hover:border-error hover:bg-[rgba(186,26,26,0.08)]"
           onDrop={handleDeleteDrop}
           onDragOver={handleDragOver}
         >

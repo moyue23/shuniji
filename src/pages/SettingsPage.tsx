@@ -32,33 +32,33 @@ export default function SettingsPage() {
     setConfig({ ...config, [key]: !(config as any)[key] });
   };
 
-  if (!config) return <div className="settings">Loading...</div>;
+  if (!config) return <div className="settings p-8 overflow-y-auto h-full">Loading...</div>;
 
   return (
-    <div className="settings">
-      <h2>Settings</h2>
+    <div className="settings p-8 overflow-y-auto h-full">
+      <h2 className="mb-8 text-2xl font-semibold tracking-[-0.01em] leading-8 text-text-main">Settings</h2>
 
       <section>
-        <h3>Paths</h3>
-        <div className="setting-row">
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">Paths</h3>
+        <div className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span>Sticker save path</span>
-          <button onClick={() => api.openStickerFolder()}>Open Folder</button>
+          <button className="px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={() => api.openStickerFolder()}>Open Folder</button>
         </div>
-        <div className="setting-row">
+        <div className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span>Database path</span>
-          <button onClick={() => api.openDbFolder()}>Open Folder</button>
+          <button className="px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={() => api.openDbFolder()}>Open Folder</button>
         </div>
       </section>
 
       <section>
-        <h3>Appearance</h3>
-        <div className="setting-row">
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">Appearance</h3>
+        <div className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span>Theme</span>
-          <div className="theme-toggle">
+          <div className="flex gap-1 bg-surface-soft rounded-md p-0.75">
             {THEME_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
-                className={`theme-option ${theme === opt.value ? "active" : ""}`}
+                className={`px-3.5 py-1.25 border-none rounded-sm bg-transparent cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:text-text-main ${theme === opt.value ? "bg-primary text-on-primary shadow-sm" : "text-text-muted"}`}
                 onClick={() => {
                   setThemeState(opt.value);
                   setTheme(opt.value);
@@ -72,26 +72,29 @@ export default function SettingsPage() {
       </section>
 
       <section>
-        <h3>Window</h3>
-        <label className="setting-row">
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">Window</h3>
+        <label className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span>Enable tray</span>
           <input
+            className="size-5 cursor-pointer accent-primary"
             type="checkbox"
             checked={config.tray_enabled}
             onChange={() => toggle("tray_enabled")}
           />
         </label>
-        <label className="setting-row">
+        <label className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span>Auto-start on boot</span>
           <input
+            className="size-5 cursor-pointer accent-primary"
             type="checkbox"
             checked={config.autostart_enabled}
             onChange={() => toggle("autostart_enabled")}
           />
         </label>
-        <label className="setting-row">
+        <label className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span>Enable global hotkey (Ctrl+Shift+E)</span>
           <input
+            className="size-5 cursor-pointer accent-primary"
             type="checkbox"
             checked={config.hotkey_enabled}
             onChange={() => toggle("hotkey_enabled")}
@@ -100,9 +103,10 @@ export default function SettingsPage() {
       </section>
 
       <section>
-        <h3>About</h3>
-        <div className="setting-row">
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">About</h3>
+        <div className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <a
+            className="text-primary no-underline font-semibold hover:underline"
             href="https://github.com/moyue23/shuniji"
             target="_blank"
             rel="noopener noreferrer"
@@ -112,7 +116,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <button className="save-btn" onClick={handleSave}>
+      <button className="mt-8 px-8 py-3 border-none rounded-xl bg-primary text-on-primary cursor-pointer text-sm font-bold tracking-[0.02em] font-body shadow-btn transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_12px_28px_rgba(93,57,223,0.35)] hover:-translate-y-0.5" onClick={handleSave}>
         Save Settings
       </button>
     </div>

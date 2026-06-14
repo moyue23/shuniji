@@ -73,29 +73,29 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className="flex h-screen w-screen">
       <Sidebar />
-      <main className="main">
-        <header className="header">
-          <div className="header-left">
-            <button className="header-btn" onClick={handleAddSticker}>
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0 bg-surface-container-lowest">
+        <header className="h-20 bg-(--header-bg) backdrop-blur-md border-b border-border-subtle flex items-center px-8 gap-6 z-50 shrink-0">
+          <div className="flex gap-3 shrink-0">
+            <button className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-subtle rounded-xl bg-surface-container-lowest cursor-pointer text-sm font-bold tracking-[0.02em] font-body text-primary whitespace-nowrap shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md" onClick={handleAddSticker}>
               <Plus size={18} /> Sticker
             </button>
           </div>
-          <div className="header-center">
-            <span className="search-icon">
+          <div className="flex-1 max-w-2xl relative group">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none flex transition-colors duration-200 group-focus-within:text-primary">
               <Search size={20} />
             </span>
             <input
-              className="search-input"
+              className="w-full bg-surface-soft border-none rounded-full py-3 pl-11 pr-4 text-base font-body text-text-main outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 placeholder:text-text-muted/70 hover:bg-surface-container-low focus:bg-surface-container-lowest focus:shadow-[0_0_0_3px_rgba(93,57,223,0.12),0_4px_20px_rgba(93,57,223,0.08)]"
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search stickers..."
             />
           </div>
-          <div className="header-right">
+          <div className="flex gap-3 shrink-0">
             <button
-              className={`header-btn edit-btn ${state.editMode ? "active" : ""}`}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 border rounded-xl cursor-pointer text-sm font-bold tracking-[0.02em] font-body whitespace-nowrap transition-all duration-200 ${state.editMode ? "bg-primary text-on-primary border-primary shadow-btn" : "bg-surface-container-lowest text-primary border-border-subtle shadow-sm hover:border-primary hover:shadow-md"}`}
               onClick={() => dispatch({ type: "TOGGLE_EDIT_MODE" })}
             >
               <Pencil size={16} /> Edit
@@ -105,9 +105,9 @@ function App() {
         {state.currentGroupId === -1 ? (
           <SettingsPage />
         ) : (
-          <div className="content">
+          <div className="content flex-1 overflow-y-auto p-8">
             {state.editMode && (
-              <div className="edit-banner">Edit Mode — drag stickers to reorder or delete</div>
+              <div className="bg-primary-container border border-[rgba(93,57,223,0.2)] rounded-lg px-4 py-2.5 mb-6 text-sm font-medium text-primary flex items-center gap-2">Edit Mode — drag stickers to reorder or delete</div>
             )}
             <StickerGrid />
           </div>

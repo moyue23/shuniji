@@ -47,11 +47,11 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps) 
   };
 
   return (
-    <div className="context-menu" ref={menuRef} style={style}>
+    <div className="bg-surface-container-lowest border border-border-subtle rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.12)] p-1.5 min-w-35 flex flex-col gap-0.5" ref={menuRef} style={style}>
       {items.map((item, i) => (
         <button
           key={i}
-          className={`context-menu-item${item.danger ? " danger" : ""}`}
+          className={`block w-full px-3.5 py-2 border-none rounded-sm bg-transparent text-[13px] font-medium font-body cursor-pointer text-left transition-colors duration-100 hover:bg-surface-soft ${item.danger ? "text-error hover:bg-error-container" : "text-text-main"}`}
           onClick={() => {
             item.action();
             onClose();
