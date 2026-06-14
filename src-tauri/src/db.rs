@@ -60,8 +60,13 @@ impl StickerDb {
     }
 
     fn ensure_default_group(&self) -> Result<()> {
+        // Migrate: rename old "Ungrouped" to "My Stickers"
         self.conn.execute(
-            "INSERT OR IGNORE INTO groups (id, name, icon_path) VALUES (0, 'Ungrouped', '')",
+            "UPDATE groups SET name = 'My Stickers' WHERE id = 0 AND name = 'Ungrouped'",
+            [],
+        )?;
+        self.conn.execute(
+            "INSERT OR IGNORE INTO groups (id, name, icon_path) VALUES (0, 'My Stickers', '')",
             [],
         )?;
         Ok(())
