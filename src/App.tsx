@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { Pencil, Plus, Search } from "lucide-react";
+import { Pencil, Plus, Search, X } from "lucide-react";
 import { useApp } from "./context/AppContext";
 import * as api from "./utils/tauri";
 import { initTheme } from "./utils/theme";
@@ -102,7 +102,7 @@ function App() {
               className={`inline-flex items-center gap-2 px-5 py-2.5 border rounded-xl cursor-pointer text-sm font-bold tracking-[0.02em] font-body whitespace-nowrap transition-all duration-200 ${state.editMode ? "bg-primary text-on-primary border-primary shadow-btn" : "bg-surface-container-lowest text-primary border-border-subtle shadow-sm hover:border-primary hover:shadow-md"}`}
               onClick={() => dispatch({ type: "TOGGLE_EDIT_MODE" })}
             >
-              <Pencil size={16} /> Edit
+              {state.editMode ? <><X size={16} /> Exit</> : <><Pencil size={16} /> Edit</>}
             </button>
           </div>
         </header>
@@ -113,9 +113,6 @@ function App() {
           <SettingsPage />
         ) : (
           <div className="content flex-1 overflow-y-auto p-8">
-            {state.editMode && (
-              <div className="bg-primary-container border border-[rgba(93,57,223,0.2)] rounded-lg px-4 py-2.5 mb-6 text-sm font-medium text-primary flex items-center gap-2">Edit Mode — drag stickers to reorder or delete</div>
-            )}
             <StickerGrid />
           </div>
         )}

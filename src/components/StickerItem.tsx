@@ -1,9 +1,8 @@
 import { useState, useRef, useCallback } from "react";
-import { ImageOff } from "lucide-react";
+import { ImageOff, X } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import * as api from "../utils/tauri";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import InlineEdit from "./InlineEdit";
 import { useToast } from "./common/Toast";
 
 interface Props {
@@ -26,15 +25,6 @@ export default function StickerItem({ sticker, onReorder }: Props) {
   const isGif = sticker.image_path.toLowerCase().endsWith(".gif");
   const imgSrc = convertFileSrc(sticker.image_path);
 
-  const handleRename = async (name: string) => {
-    if (name === sticker.tags) return;
-    await api.updateStickerName(sticker.id, name);
-    dispatch({
-      type: "UPDATE_STICKER",
-      payload: { ...sticker, tags: name } as any,
-    });
-  };
-
   const handleCopy = useCallback(async () => {
     try {
       await api.copyStickerToClipboard(sticker.id);
@@ -43,6 +33,13 @@ export default function StickerItem({ sticker, onReorder }: Props) {
       console.error("Copy failed:", e);
     }
   }, [sticker.id, toast]);
+
+  const handleDelete = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Delete this sticker?")) return;
+    await api.deleteSticker(sticker.id);
+    dispatch({ type: "REMOVE_STICKER", payload: sticker.id });
+  }, [sticker.id, dispatch]);
 
   const handleClick = () => {
     if (state.editMode) return;
@@ -91,15 +88,13 @@ export default function StickerItem({ sticker, onReorder }: Props) {
       {isGif && (
         <div className="px-3 py-2 text-xs font-medium text-text-secondary truncate text-center">GIF</div>
       )}
-      {state.editMode && !isGif && (
-        <div className="px-3 py-2 text-center">
-          <InlineEdit
-            value={sticker.tags || "Untitled"}
-            onSave={handleRename}
-            className="text-xs font-medium text-text-secondary cursor-pointer hover:text-text-main transition-colors"
-            inputClassName="text-xs font-medium text-text-main px-2 py-1 rounded border border-primary bg-surface-container-lowest outline-none w-full text-center font-body"
-          />
-        </div>
+      {state.editMode && (
+        <button
+          className="absolute top-2 right-2 size-6 flex items-center justify-center rounded-full bg-error text-white shadow-md cursor-pointer border-none hover:bg-red-700 transition-colors z-10"
+          onClick={handleDelete}
+        >
+          <X size={12} />
+        </button>
       )}
     </div>
   );

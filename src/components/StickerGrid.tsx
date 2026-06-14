@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { Trash2 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import * as api from "../utils/tauri";
 import StickerItem from "./StickerItem";
@@ -36,15 +35,6 @@ export default function StickerGrid() {
     e.preventDefault();
   };
 
-  const handleDeleteDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    const stickerId = e.dataTransfer.getData("text/plain");
-    if (!stickerId) return;
-    if (!confirm("Delete this sticker?")) return;
-    await api.deleteSticker(Number(stickerId));
-    dispatch({ type: "REMOVE_STICKER", payload: Number(stickerId) });
-  };
-
   return (
     <div className="min-h-full" onDragOver={handleDragOver}>
       {state.loading && <div className="text-center px-10 py-20 text-text-muted text-base font-medium">Loading...</div>}
@@ -56,15 +46,6 @@ export default function StickerGrid() {
           <StickerItem key={sticker.id} sticker={sticker} onReorder={handleReorder} />
         ))}
       </div>
-      {state.editMode && (
-        <div
-          className="mt-8 p-8 border-2 border-dashed border-[rgba(186,26,26,0.4)] rounded-xl text-center text-error text-sm font-semibold bg-error-container transition-all duration-200 flex items-center justify-center gap-2 hover:border-error hover:bg-[rgba(186,26,26,0.08)]"
-          onDrop={handleDeleteDrop}
-          onDragOver={handleDragOver}
-        >
-          <Trash2 size={18} /> Drag here to delete
-        </div>
-      )}
     </div>
   );
 }
