@@ -68,31 +68,17 @@ export default function SettingsPage() {
             onChange={() => toggle("hotkey_enabled")}
           />
         </label>
-        <div className="setting-row">
-          <span>Theme color</span>
-          <input
-            type="color"
-            value={config.theme_color}
-            onChange={(e) =>
-              setConfig({ ...config, theme_color: e.target.value })
-            }
-          />
-        </div>
       </section>
 
       <section>
         <h3>About</h3>
-        <div className="setting-row">
-          <span>Version</span>
-          <span>{config.software_version}</span>
-        </div>
         <div className="setting-row">
           <a
             href="https://github.com/moyue23/shuniji"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Feedback on GitHub
+            GitHub
           </a>
         </div>
       </section>
