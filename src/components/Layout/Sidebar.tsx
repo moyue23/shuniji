@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Folder, Images, Plus, Settings } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import * as api from "../../utils/tauri";
+import ContextMenu, { type ContextMenuItem } from "../ContextMenu";
 
 export default function Sidebar() {
   const { state, dispatch, loadStickers } = useApp();
@@ -31,6 +32,13 @@ export default function Sidebar() {
   };
 
   const [dragOverId, setDragOverId] = useState<number | null>(null);
+
+  // Context menu state
+  const [ctxMenu, setCtxMenu] = useState<{
+    x: number;
+    y: number;
+    items: ContextMenuItem[];
+  } | null>(null);
 
   const handleGroupDrop = async (e: React.DragEvent, groupId: number) => {
     e.preventDefault();
@@ -106,15 +114,14 @@ export default function Sidebar() {
               onDrop={(e) => handleGroupDrop(e, g.id)}
               onContextMenu={(e) => {
                 e.preventDefault();
-                void [
-                  { label: "Rename", action: () => handleRenameGroup(g.id, g.name) },
-                  { label: "Delete", action: () => handleDeleteGroup(g.id) },
-                ];
-                const choice = prompt(
-                  `Group: ${g.name}\n1. Rename\n2. Delete\nEnter number:`
-                );
-                if (choice === "1") handleRenameGroup(g.id, g.name);
-                if (choice === "2") handleDeleteGroup(g.id);
+                setCtxMenu({
+                  x: e.clientX,
+                  y: e.clientY,
+                  items: [
+                    { label: "Rename", action: () => handleRenameGroup(g.id, g.name) },
+                    { label: "Delete", action: () => handleDeleteGroup(g.id), danger: true },
+                  ],
+                });
               }}
             >
               <span className="sidebar-item-icon"><Folder size={16} /></span>
@@ -132,6 +139,15 @@ export default function Sidebar() {
           <span>Settings</span>
         </div>
       </div>
+
+      {ctxMenu && (
+        <ContextMenu
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          items={ctxMenu.items}
+          onClose={() => setCtxMenu(null)}
+        />
+      )}
     </aside>
   );
 }
