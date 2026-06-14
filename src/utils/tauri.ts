@@ -41,6 +41,9 @@ export const deleteGroup = (id: number) => invoke("delete_group", { id });
 export const copyStickerToClipboard = (id: number) =>
   invoke("copy_sticker_to_clipboard", { id });
 
+export const importFolder = (folderPath: string, groupId: number) =>
+  invoke<Sticker[]>("import_folder", { folderPath, groupId });
+
 export const getConfig = () => invoke<AppSettings>("get_config");
 
 export const saveConfig = (newConfig: AppSettings) =>
@@ -58,4 +61,12 @@ export const openImageDialog = async () => {
     ],
   });
   return result as string[] | null;
+};
+
+export const openFolderDialog = async () => {
+  const result = await open({
+    directory: true,
+    multiple: false,
+  });
+  return result as string | null;
 };

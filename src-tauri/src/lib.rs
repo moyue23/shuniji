@@ -124,6 +124,41 @@ fn copy_sticker_to_clipboard(state: tauri::State<AppState>, id: i64) -> Result<(
 }
 
 #[tauri::command]
+fn import_folder(state: tauri::State<AppState>, folder_path: String, group_id: i64) -> Result<Vec<db::Sticker>, String> {
+    let config = state.config.lock().map_err(|e| e.to_string())?;
+    let dest_dir = PathBuf::from(&config.sticker_save_path);
+    fs_ops::ensure_dir(&dest_dir)?;
+
+    let entries = std::fs::read_dir(&folder_path).map_err(|e| e.to_string())?;
+    let valid_ext = ["png", "jpg", "jpeg", "bmp", "gif"];
+
+    let mut stickers: Vec<db::Sticker> = Vec::new();
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        if !path.is_file() { continue; }
+        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+        if !valid_ext.contains(&ext.as_str()) { continue; }
+
+        let new_path = fs_ops::copy_sticker_to_storage(&path.to_string_lossy(), &dest_dir)?;
+        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("sticker");
+        let id = db.add_sticker(&new_path, stem, group_id).map_err(|e| e.to_string())?;
+        stickers.push(db::Sticker {
+            id,
+            image_path: new_path,
+            tags: stem.to_string(),
+            group_id,
+            created_at: chrono::Local::now().to_rfc3339(),
+            sort_order: 0,
+        });
+    }
+
+    Ok(stickers)
+}
+
+#[tauri::command]
 fn get_config(state: tauri::State<AppState>) -> Result<config::AppConfig, String> {
     let config = state.config.lock().map_err(|e| e.to_string())?;
     Ok(config.clone())
@@ -311,6 +346,7 @@ pub fn run() {
             update_group_icon,
             delete_group,
             copy_sticker_to_clipboard,
+            import_folder,
             get_config,
             save_config,
             open_sticker_folder,
