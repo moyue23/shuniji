@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Folder, Images, Settings } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import * as api from "../../utils/tauri";
 
@@ -87,7 +88,7 @@ export default function Sidebar() {
           onDragLeave={() => setDragOverId(null)}
           onDrop={(e) => handleGroupDrop(e, 0)}
         >
-          <span className="sidebar-item-icon">📁</span>
+          <span className="sidebar-item-icon"><Images size={16} /></span>
           <span>All</span>
         </div>
         {state.groups
@@ -116,7 +117,7 @@ export default function Sidebar() {
                 if (choice === "2") handleDeleteGroup(g.id);
               }}
             >
-              <span className="sidebar-item-icon">📂</span>
+              <span className="sidebar-item-icon"><Folder size={16} /></span>
               <span>{g.name}</span>
             </div>
           ))}
@@ -127,7 +128,7 @@ export default function Sidebar() {
           className="sidebar-item"
           onClick={() => dispatch({ type: "SET_CURRENT_GROUP", payload: -1 })}
         >
-          <span className="sidebar-item-icon">⚙️</span>
+          <span className="sidebar-item-icon"><Settings size={16} /></span>
           <span>Settings</span>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { Pencil } from "lucide-react";
 import { useApp } from "./context/AppContext";
 import * as api from "./utils/tauri";
 import Sidebar from "./components/Layout/Sidebar";
@@ -92,7 +93,7 @@ function App() {
               className={`header-btn edit-btn ${state.editMode ? "active" : ""}`}
               onClick={() => dispatch({ type: "TOGGLE_EDIT_MODE" })}
             >
-              ✏️ Edit
+              <Pencil size={14} /> Edit
             </button>
           </div>
         </header>

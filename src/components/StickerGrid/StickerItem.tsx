@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { ImageOff } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import * as api from "../../utils/tauri";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -103,7 +104,7 @@ export default function StickerItem({ sticker, onReorder }: Props) {
     >
       <div className="sticker-item-img-wrap">
         {imgError ? (
-          <span className="sticker-item-placeholder">🖼</span>
+          <span className="sticker-item-placeholder"><ImageOff size={28} /></span>
         ) : (
           <>
             <img
