@@ -55,7 +55,7 @@ export default function SettingsPage() {
         </div>
         <div className="flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span className="shrink-0">Database path</span>
-          <input className="flex-1 min-w-0 px-3 py-1.5 rounded-md bg-surface-container-lowest text-text-muted text-xs font-mono border border-border-subtle outline-none cursor-default select-all" type="text" readOnly value={config.db_path} title={config.db_path} />
+          <input className="flex-1 min-w-0 px-3 py-1.5 rounded-md bg-surface-container-lowest text-text-muted text-xs font-mono border border-border-subtle outline-none cursor-default select-all" type="text" readOnly value={config.db_path.replace(/[\\/][^\\/]+$/, '')} title={config.db_path.replace(/[\\/][^\\/]+$/, '')} />
           <button className="shrink-0 px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={() => api.openDbFolder()}>Open Folder</button>
         </div>
       </section>
