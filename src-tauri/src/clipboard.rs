@@ -65,14 +65,12 @@ fn copy_static_image_to_clipboard(path: &str) -> Result<(), String> {
 fn copy_gif_to_clipboard(path: &str) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        let abs_path = std::fs::canonicalize(path).map_err(|e| e.to_string())?;
-        let abs_path_str = abs_path.to_string_lossy().replace("\\\\?\\", "");
         let ps_script = format!(
-            "$paths = @('{}'); \
-             $data = New-Object System.Collections.Specialized.StringCollection; \
-             $paths | ForEach-Object {{ $data.Add($_) }}; \
-             [System.Windows.Forms.Clipboard]::SetFileDropList($data);",
-            abs_path_str.replace("'", "''")
+            "Add-Type -AssemblyName System.Windows.Forms; \
+             $img = [System.Drawing.Image]::FromFile('{}'); \
+             [System.Windows.Forms.Clipboard]::SetImage($img); \
+             $img.Dispose();",
+            path.replace("'", "''")
         );
         let output = Command::new("powershell")
             .args(["-Command", &ps_script])
