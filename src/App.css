@@ -1,3 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-container: var(--primary-container);
+  --color-primary-fixed-dim: var(--primary-fixed-dim);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-text-secondary: var(--text-secondary);
+  --color-on-primary: var(--on-primary);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-border-subtle: var(--border-subtle);
+  --color-border: var(--border);
+  --color-outline-variant: var(--outline-variant);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+}
+
 /* ===== Design Tokens ===== */
 :root {
   /* Primary */
@@ -49,6 +75,45 @@
 
   /* Spacing */
   --sidebar-width: 256px;
+
+  /* Header */
+  --header-bg: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] {
+  --primary: #cabeff;
+  --primary-hover: #d9d0ff;
+  --primary-container: #2d2054;
+  --primary-fixed-dim: #5d39df;
+
+  --surface: #12121a;
+  --surface-soft: #1a1a28;
+  --surface-container: #1e1e30;
+  --surface-container-low: #161622;
+  --surface-container-lowest: #0e0e16;
+  --surface-container-high: #242438;
+
+  --text-main: #e8e8ec;
+  --text-muted: #8a8a9e;
+  --text-secondary: #9e9eb0;
+  --on-primary: #12121a;
+  --on-surface: #e8e8ec;
+  --on-surface-variant: #c9c4d8;
+
+  --border-subtle: #2a2a3c;
+  --border: #3a3a4c;
+  --outline-variant: #4a4a5c;
+
+  --error: #ffb4ab;
+  --error-container: #93000a;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(202, 190, 255, 0.08);
+  --shadow-btn: 0 8px 24px rgba(202, 190, 255, 0.2);
+
+  --header-bg: rgba(14, 14, 22, 0.8);
 }
 
 /* ===== Reset ===== */
@@ -172,6 +237,23 @@ body {
   padding: 8px 12px;
 }
 
+.sidebar-nav::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: var(--surface-container-high);
+  border-radius: var(--radius-full);
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background-color: var(--outline-variant);
+}
+
 .sidebar-item {
   display: flex;
   align-items: center;
@@ -238,7 +320,7 @@ body {
 /* ===== Header ===== */
 .header {
   height: 80px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--header-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
@@ -513,7 +595,6 @@ body {
 /* ===== Settings Page ===== */
 .settings {
   padding: 32px;
-  max-width: 640px;
   overflow-y: auto;
   height: 100%;
 }
@@ -566,6 +647,37 @@ body {
 
 .setting-row + .setting-row {
   margin-top: 4px;
+}
+
+.theme-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-soft);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+
+.theme-option {
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+}
+
+.theme-option:hover {
+  color: var(--text-main);
+}
+
+.theme-option.active {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .setting-row button {

@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
 import * as api from "../utils/tauri";
+import { getStoredTheme, setTheme, type Theme } from "../utils/theme";
 import type { AppSettings } from "../types";
+
+const THEME_OPTIONS: { value: Theme; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
 
 export default function SettingsPage() {
   const { state, dispatch } = useApp();
   const [config, setConfig] = useState(state.settings);
+  const [theme, setThemeState] = useState<Theme>(getStoredTheme);
 
   useEffect(() => {
     if (!config) {
@@ -39,6 +47,27 @@ export default function SettingsPage() {
         <div className="setting-row">
           <span>Database path</span>
           <button onClick={() => api.openDbFolder()}>Open Folder</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Appearance</h3>
+        <div className="setting-row">
+          <span>Theme</span>
+          <div className="theme-toggle">
+            {THEME_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                className={`theme-option ${theme === opt.value ? "active" : ""}`}
+                onClick={() => {
+                  setThemeState(opt.value);
+                  setTheme(opt.value);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 

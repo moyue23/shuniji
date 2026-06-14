@@ -3,6 +3,7 @@ import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Pencil, Plus, Search } from "lucide-react";
 import { useApp } from "./context/AppContext";
 import * as api from "./utils/tauri";
+import { initTheme } from "./utils/theme";
 import Sidebar from "./components/Layout/Sidebar";
 import StickerGrid from "./components/StickerGrid/StickerGrid";
 import SettingsPage from "./pages/SettingsPage";
@@ -13,6 +14,7 @@ function App() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    initTheme();
     const init = async () => {
       await api.initApp();
       await loadGroups();
