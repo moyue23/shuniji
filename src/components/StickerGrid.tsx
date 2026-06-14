@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Trash2 } from "lucide-react";
-import { useApp } from "../../context/AppContext";
-import * as api from "../../utils/tauri";
+import { useApp } from "../context/AppContext";
+import * as api from "../utils/tauri";
 import StickerItem from "./StickerItem";
 
 export default function StickerGrid() {
