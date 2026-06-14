@@ -89,14 +89,9 @@ impl StickerDb {
     }
 
     pub fn get_stickers(&self, group_id: Option<i64>) -> Result<Vec<Sticker>> {
-        let sql = if let Some(gid) = group_id {
-            if gid == 0 {
-                "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers ORDER BY sort_order ASC, created_at DESC"
-                    .to_string()
-            } else {
-                "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers WHERE group_id = ?1 ORDER BY sort_order ASC, created_at DESC"
-                    .to_string()
-            }
+        let sql = if group_id.is_some() {
+            "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers WHERE group_id = ?1 ORDER BY sort_order ASC, created_at DESC"
+                .to_string()
         } else {
             "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers ORDER BY sort_order ASC, created_at DESC"
                 .to_string()
@@ -104,11 +99,7 @@ impl StickerDb {
 
         let mut stmt = self.conn.prepare(&sql)?;
         let rows = if let Some(gid) = group_id {
-            if gid == 0 {
-                stmt.query_map([], Self::map_sticker)?
-            } else {
-                stmt.query_map(params![gid], Self::map_sticker)?
-            }
+            stmt.query_map(params![gid], Self::map_sticker)?
         } else {
             stmt.query_map([], Self::map_sticker)?
         };
@@ -129,23 +120,15 @@ impl StickerDb {
 
     pub fn search_stickers(&self, keyword: &str, group_id: Option<i64>) -> Result<Vec<Sticker>> {
         let like = format!("%{}%", keyword);
-        let sql = if let Some(gid) = group_id {
-            if gid == 0 {
-                "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers WHERE tags LIKE ?1 ORDER BY sort_order ASC, created_at DESC".to_string()
-            } else {
-                "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers WHERE tags LIKE ?1 AND group_id = ?2 ORDER BY sort_order ASC, created_at DESC".to_string()
-            }
+        let sql = if group_id.is_some() {
+            "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers WHERE tags LIKE ?1 AND group_id = ?2 ORDER BY sort_order ASC, created_at DESC".to_string()
         } else {
             "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers WHERE tags LIKE ?1 ORDER BY sort_order ASC, created_at DESC".to_string()
         };
 
         let mut stmt = self.conn.prepare(&sql)?;
         let rows = if let Some(gid) = group_id {
-            if gid == 0 {
-                stmt.query_map(params![&like], Self::map_sticker)?
-            } else {
-                stmt.query_map(params![&like, gid], Self::map_sticker)?
-            }
+            stmt.query_map(params![&like, gid], Self::map_sticker)?
         } else {
             stmt.query_map(params![&like], Self::map_sticker)?
         };
