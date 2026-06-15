@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { Pencil, Plus, Search, X } from "lucide-react";
+import { Pencil, Plus, RefreshCw, Search, X } from "lucide-react";
 import { useApp } from "./context/AppContext";
 import * as api from "./utils/tauri";
 import { initTheme } from "./utils/theme";
@@ -11,7 +11,7 @@ import StickerDetailPage from "./pages/StickerDetailPage";
 import "./App.css";
 
 function App() {
-  const { state, dispatch, loadGroups, loadStickers } = useApp();
+  const { state, dispatch, loadGroups, loadStickers, refreshAll } = useApp();
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -27,7 +27,7 @@ function App() {
       if (event.payload.type === "drop") {
         for (const path of event.payload.paths) {
           const ext = path.split(".").pop()?.toLowerCase();
-          if (["png", "jpg", "jpeg", "bmp", "gif"].includes(ext || "")) {
+          if (["png", "jpg", "jpeg", "bmp", "gif", "webp"].includes(ext || "")) {
             const name = path.split(/[\\/]/).pop()?.split(".")[0] || "sticker";
             try {
               const sticker = await api.addSticker(path, name, 0);
@@ -82,6 +82,9 @@ function App() {
           <div className="flex gap-3 shrink-0">
             <button className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-subtle rounded-xl bg-surface-container-lowest cursor-pointer text-sm font-bold tracking-[0.02em] font-body text-primary whitespace-nowrap shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md" onClick={handleAddSticker}>
               <Plus size={18} /> Sticker
+            </button>
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 border border-border-subtle rounded-xl bg-surface-container-lowest cursor-pointer text-sm font-bold tracking-[0.02em] font-body text-text-main whitespace-nowrap shadow-sm transition-all duration-200 hover:border-primary hover:text-primary hover:shadow-md" onClick={async () => { await api.cleanupInvalidStickers(); await refreshAll(); }}>
+              <RefreshCw size={18} />
             </button>
           </div>
           <div className="flex-1 flex justify-center">

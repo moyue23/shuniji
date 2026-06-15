@@ -11,9 +11,10 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 ];
 
 export default function SettingsPage() {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, refreshAll } = useApp();
   const [config, setConfig] = useState(state.settings);
   const [theme, setThemeState] = useState<Theme>(getStoredTheme);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!config) {
@@ -32,6 +33,34 @@ export default function SettingsPage() {
     setConfig({ ...config, [key]: !(config as any)[key] });
   };
 
+  const handleChangeStickerPath = async () => {
+    const folder = await api.openFolderDialog();
+    if (!folder || !config) return;
+
+    const confirmed = await api.confirmDialog(
+      "Move existing sticker files from the old location to the new folder?",
+      "Migrate files?"
+    );
+    if (confirmed) {
+      try {
+        const result = await api.migrateStickerStorage(folder);
+        setStatusMsg(result);
+        await refreshAll();
+      } catch (e) {
+        setStatusMsg(`Migration failed: ${e}`);
+        return;
+      }
+    } else {
+      const updated = { ...config, sticker_save_path: folder };
+      setConfig(updated);
+      await api.saveConfig(updated);
+      dispatch({ type: "SET_SETTINGS", payload: updated });
+      setStatusMsg("Save path updated (files not moved).");
+    }
+    const refreshed = await api.getConfig();
+    setConfig(refreshed);
+  };
+
   if (!config) return <div className="settings p-8 overflow-y-auto h-full">Loading...</div>;
 
   return (
@@ -43,20 +72,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <span className="shrink-0">Sticker save path</span>
           <input className="flex-1 min-w-0 px-3 py-1.5 rounded-md bg-surface-container-lowest text-text-muted text-xs font-mono border border-border-subtle outline-none cursor-default select-all" type="text" readOnly value={config.sticker_save_path} title={config.sticker_save_path} />
-          <button className="shrink-0 px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={async () => {
-            const folder = await api.openFolderDialog();
-            if (folder) {
-              const updated = { ...config, sticker_save_path: folder };
-              setConfig(updated);
-              await api.saveConfig(updated);
-              dispatch({ type: "SET_SETTINGS", payload: updated });
-            }
-          }}>Choose Folder</button>
-        </div>
-        <div className="flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
-          <span className="shrink-0">Database path</span>
-          <input className="flex-1 min-w-0 px-3 py-1.5 rounded-md bg-surface-container-lowest text-text-muted text-xs font-mono border border-border-subtle outline-none cursor-default select-all" type="text" readOnly value={config.db_path.replace(/[\\/][^\\/]+$/, '')} title={config.db_path.replace(/[\\/][^\\/]+$/, '')} />
-          <button className="shrink-0 px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={() => api.openDbFolder()}>Open Folder</button>
+          <button className="shrink-0 px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={handleChangeStickerPath}>Choose Folder</button>
         </div>
       </section>
 
@@ -125,6 +141,10 @@ export default function SettingsPage() {
           </a>
         </div>
       </section>
+
+      {statusMsg && (
+        <div className="mt-6 px-4 py-3 rounded-lg bg-surface-soft text-sm text-text-main border border-border-subtle">{statusMsg}</div>
+      )}
 
       <button className="mt-8 px-8 py-3 border-none rounded-xl bg-primary text-on-primary cursor-pointer text-sm font-bold tracking-[0.02em] font-body shadow-btn transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_12px_28px_rgba(93,57,223,0.35)] hover:-translate-y-0.5" onClick={handleSave}>
         Save Settings

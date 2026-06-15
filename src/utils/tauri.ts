@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, confirm } from "@tauri-apps/plugin-dialog";
 import type { Sticker, StickerGroup, AppSettings } from "../types";
 
 export const initApp = () => invoke<AppSettings>("init_app");
@@ -51,13 +51,20 @@ export const saveConfig = (newConfig: AppSettings) =>
 
 export const openStickerFolder = () => invoke("open_sticker_folder");
 
-export const openDbFolder = () => invoke("open_db_folder");
+export const migrateStickerStorage = (newFolder: string) =>
+  invoke<string>("migrate_sticker_storage", { newFolder });
+
+export const confirmDialog = (message: string, title: string) =>
+  confirm(message, title);
+
+export const cleanupInvalidStickers = () =>
+  invoke<string>("cleanup_invalid_stickers");
 
 export const openImageDialog = async () => {
   const result = await open({
     multiple: true,
     filters: [
-      { name: "Images", extensions: ["png", "jpg", "jpeg", "bmp", "gif"] },
+      { name: "Images", extensions: ["png", "jpg", "jpeg", "bmp", "gif", "webp"] },
     ],
   });
   return result as string[] | null;

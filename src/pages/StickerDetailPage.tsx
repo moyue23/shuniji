@@ -4,11 +4,13 @@ import { useApp } from "../context/AppContext";
 import * as api from "../utils/tauri";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InlineEdit from "../components/InlineEdit";
+import { useToast } from "../components/common/Toast";
 
 const MAX_TAGS = 10;
 
 export default function StickerDetailPage() {
   const { state, dispatch } = useApp();
+  const { toast } = useToast();
   const sticker = state.stickers.find((s) => s.id === state.detailStickerId);
   const [imgError, setImgError] = useState(false);
   const [tagInput, setTagInput] = useState("");
@@ -29,6 +31,7 @@ export default function StickerDetailPage() {
     if (!sticker) return;
     try {
       await api.copyStickerToClipboard(sticker.id);
+      toast("Copied!");
     } catch (e) {
       console.error("Copy failed:", e);
     }

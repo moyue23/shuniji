@@ -130,7 +130,7 @@ fn import_folder(state: tauri::State<AppState>, folder_path: String, group_id: i
     fs_ops::ensure_dir(&dest_dir)?;
 
     let entries = std::fs::read_dir(&folder_path).map_err(|e| e.to_string())?;
-    let valid_ext = ["png", "jpg", "jpeg", "bmp", "gif"];
+    let valid_ext = ["png", "jpg", "jpeg", "bmp", "gif", "webp"];
 
     let mut stickers: Vec<db::Sticker> = Vec::new();
     let db = state.db.lock().map_err(|e| e.to_string())?;
@@ -203,34 +203,29 @@ fn open_sticker_folder(state: tauri::State<AppState>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn open_db_folder(state: tauri::State<AppState>) -> Result<(), String> {
-    let config = state.config.lock().map_err(|e| e.to_string())?;
-    let path = PathBuf::from(&config.db_path)
-        .parent()
-        .unwrap_or(&PathBuf::from("."))
-        .to_path_buf();
-    #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("explorer")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-    #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open")
-            .arg(&path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-    Ok(())
+fn migrate_sticker_storage(state: tauri::State<AppState>, new_folder: String) -> Result<String, String> {
+    let new_dir = PathBuf::from(&new_folder);
+    fs_ops::ensure_dir(&new_dir)?;
+
+    let mut config = state.config.lock().map_err(|e| e.to_string())?;
+    let old_dir = PathBuf::from(&config.sticker_save_path);
+
+    let file_count = fs_ops::copy_dir_contents(&old_dir, &new_dir)?;
+
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let updated = db.update_all_image_paths(&config.sticker_save_path, &new_folder).map_err(|e| e.to_string())?;
+
+    config.sticker_save_path = new_folder;
+    config.save(&state.app_data_dir).map_err(|e| e.to_string())?;
+
+    Ok(format!("Copied {} files, updated {} database records", file_count, updated))
+}
+
+#[tauri::command]
+fn cleanup_invalid_stickers(state: tauri::State<AppState>) -> Result<String, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let removed = db.cleanup_invalid_stickers().map_err(|e| e.to_string())?;
+    Ok(format!("Removed {} missing sticker(s)", removed))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -350,7 +345,8 @@ pub fn run() {
             get_config,
             save_config,
             open_sticker_folder,
-            open_db_folder,
+            migrate_sticker_storage,
+            cleanup_invalid_stickers,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -42,3 +42,33 @@ pub fn delete_file(path: &str) -> Result<(), String> {
     }
     Ok(())
 }
+
+pub fn copy_dir_contents(src_dir: &PathBuf, dest_dir: &PathBuf) -> Result<usize, String> {
+    ensure_dir(dest_dir)?;
+    copy_dir_recursive(src_dir, src_dir, dest_dir)
+}
+
+fn copy_dir_recursive(base: &Path, current: &Path, dest_base: &Path) -> Result<usize, String> {
+    let mut count = 0;
+    let entries = fs::read_dir(current).map_err(|e| e.to_string())?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        if path.is_dir() {
+            count += copy_dir_recursive(base, &path, dest_base)?;
+        } else if path.is_file() {
+            let relative = path.strip_prefix(base).map_err(|e| e.to_string())?;
+            let target_dir = if let Some(parent) = relative.parent() {
+                dest_base.join(parent)
+            } else {
+                dest_base.to_path_buf()
+            };
+            ensure_dir(&target_dir)?;
+            copy_sticker_to_storage(&path.to_string_lossy(), &target_dir)?;
+            count += 1;
+        }
+    }
+
+    Ok(count)
+}

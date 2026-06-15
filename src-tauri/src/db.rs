@@ -25,6 +25,9 @@ pub struct StickerDb {
 
 impl StickerDb {
     pub fn new(db_path: &PathBuf) -> Result<Self> {
+        if let Some(parent) = db_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
         let conn = Connection::open(db_path)?;
         let db = Self { conn };
         db.init_tables()?;
@@ -72,20 +75,22 @@ impl StickerDb {
         Ok(())
     }
 
-    fn cleanup_invalid_stickers(&self) -> Result<()> {
+    pub fn cleanup_invalid_stickers(&self) -> Result<usize> {
         let mut stmt = self.conn.prepare("SELECT id, image_path FROM stickers")?;
         let rows = stmt.query_map([], |row| {
             Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
         })?;
 
+        let mut count = 0;
         for row in rows {
             let (id, path): (i64, String) = row?;
             if !std::path::Path::new(&path).exists() {
                 self.conn.execute("DELETE FROM stickers WHERE id = ?1", params![id])?;
+                count += 1;
             }
         }
 
-        Ok(())
+        Ok(count)
     }
 
     pub fn get_stickers(&self, group_id: Option<i64>) -> Result<Vec<Sticker>> {
@@ -247,5 +252,13 @@ impl StickerDb {
         let mut stmt = self.conn.prepare("SELECT id, name FROM groups")?;
         let rows = stmt.query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)))?;
         rows.collect()
+    }
+
+    pub fn update_all_image_paths(&self, old_prefix: &str, new_prefix: &str) -> Result<usize> {
+        let count = self.conn.execute(
+            "UPDATE stickers SET image_path = REPLACE(image_path, ?1, ?2) WHERE image_path LIKE ?3",
+            rusqlite::params![old_prefix, new_prefix, format!("{}%", old_prefix)],
+        )?;
+        Ok(count)
     }
 }
