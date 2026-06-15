@@ -36,7 +36,7 @@ export default function StickerItem({ sticker, onReorder }: Props) {
 
   const handleDelete = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Delete this sticker?")) return;
+    if (!await api.confirmDialog("Delete this sticker?", "Delete Sticker")) return;
     await api.deleteSticker(sticker.id);
     dispatch({ type: "REMOVE_STICKER", payload: sticker.id });
   }, [sticker.id, dispatch]);

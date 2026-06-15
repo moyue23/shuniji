@@ -37,11 +37,13 @@ fn search_stickers(state: tauri::State<AppState>, keyword: String, group_id: Opt
 #[tauri::command]
 fn add_sticker(state: tauri::State<AppState>, source_path: String, tags: String, group_id: i64) -> Result<db::Sticker, String> {
     let config = state.config.lock().map_err(|e| e.to_string())?;
-    let dest_dir = PathBuf::from(&config.sticker_save_path);
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let group_name = db.get_group_name(group_id).map_err(|e| e.to_string())?;
+    let dest_dir = fs_ops::group_dir(&config.sticker_save_path, &group_name);
+    drop(config);
     fs_ops::ensure_dir(&dest_dir)?;
 
     let new_path = fs_ops::copy_sticker_to_storage(&source_path, &dest_dir)?;
-    let db = state.db.lock().map_err(|e| e.to_string())?;
     let id = db.add_sticker(&new_path, &tags, group_id).map_err(|e| e.to_string())?;
 
     Ok(db::Sticker {
@@ -62,8 +64,33 @@ fn update_sticker_name(state: tauri::State<AppState>, id: i64, new_name: String)
 
 #[tauri::command]
 fn update_sticker_group(state: tauri::State<AppState>, id: i64, group_id: i64) -> Result<(), String> {
+    let config = state.config.lock().map_err(|e| e.to_string())?;
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.update_sticker_group(id, group_id).map_err(|e| e.to_string())
+    let sticker = db.get_sticker(id).map_err(|e| e.to_string())?;
+
+    if sticker.group_id == group_id {
+        return Ok(());
+    }
+
+    let old_name = db.get_group_name(sticker.group_id).map_err(|e| e.to_string())?;
+    let new_name = db.get_group_name(group_id).map_err(|e| e.to_string())?;
+
+    let old_dir = fs_ops::group_dir(&config.sticker_save_path, &old_name);
+    let new_dir = fs_ops::group_dir(&config.sticker_save_path, &new_name);
+
+    let p = PathBuf::from(&sticker.image_path);
+    let filename = p.file_name().and_then(|f| f.to_str()).unwrap_or("sticker.png");
+    let new_path = new_dir.join(filename);
+    let new_path_str = new_path.to_string_lossy().to_string();
+
+    fs_ops::ensure_dir(&new_dir)?;
+    fs_ops::move_file(&sticker.image_path, &new_path_str)?;
+
+    db.update_sticker_path(id, &new_path_str).map_err(|e| e.to_string())?;
+    db.update_sticker_group(id, group_id).map_err(|e| e.to_string())?;
+
+    let _ = fs_ops::delete_empty_dir(&old_dir);
+    Ok(())
 }
 
 #[tauri::command]
@@ -91,6 +118,9 @@ fn get_groups(state: tauri::State<AppState>, exclude_zero: bool) -> Result<Vec<d
 fn add_group(state: tauri::State<AppState>, name: String) -> Result<db::StickerGroup, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let id = db.add_group(&name).map_err(|e| e.to_string())?;
+    let config = state.config.lock().map_err(|e| e.to_string())?;
+    let dir = fs_ops::group_dir(&config.sticker_save_path, &name);
+    fs_ops::ensure_dir(&dir)?;
     Ok(db::StickerGroup {
         id,
         name,
@@ -100,7 +130,29 @@ fn add_group(state: tauri::State<AppState>, name: String) -> Result<db::StickerG
 
 #[tauri::command]
 fn update_group_name(state: tauri::State<AppState>, id: i64, name: String) -> Result<(), String> {
+    let config = state.config.lock().map_err(|e| e.to_string())?;
     let db = state.db.lock().map_err(|e| e.to_string())?;
+    let old_name = db.get_group_name(id).map_err(|e| e.to_string())?;
+
+    let old_dir = fs_ops::group_dir(&config.sticker_save_path, &old_name);
+    let new_dir = fs_ops::group_dir(&config.sticker_save_path, &name);
+
+    if old_dir != new_dir && old_dir.exists() {
+        let old_prefix = old_dir.to_string_lossy().to_string();
+        let new_prefix = new_dir.to_string_lossy().to_string();
+        fs_ops::ensure_dir(&new_dir)?;
+        for entry in std::fs::read_dir(&old_dir).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let src = entry.path();
+            if src.is_file() {
+                let dst = new_dir.join(src.file_name().unwrap_or_default());
+                std::fs::rename(&src, &dst).map_err(|e| e.to_string())?;
+            }
+        }
+        let _ = fs_ops::delete_empty_dir(&old_dir);
+        db.update_all_image_paths(&old_prefix, &new_prefix).map_err(|e| e.to_string())?;
+    }
+
     db.update_group_name(id, &name).map_err(|e| e.to_string())
 }
 
@@ -112,8 +164,23 @@ fn update_group_icon(state: tauri::State<AppState>, id: i64, icon_path: String) 
 
 #[tauri::command]
 fn delete_group(state: tauri::State<AppState>, id: i64) -> Result<(), String> {
+    let config = state.config.lock().map_err(|e| e.to_string())?;
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.delete_group(id).map_err(|e| e.to_string())
+
+    let group_name = db.get_group_name(id).map_err(|e| e.to_string())?;
+    let paths = db.delete_group(id).map_err(|e| e.to_string())?;
+
+    // Delete sticker files from disk
+    for path in &paths {
+        fs_ops::delete_file(path)?;
+    }
+
+    // Remove the group directory
+    let group_dir = fs_ops::group_dir(&config.sticker_save_path, &group_name);
+    if group_dir.exists() {
+        let _ = std::fs::remove_dir_all(&group_dir);
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -126,33 +193,60 @@ fn copy_sticker_to_clipboard(state: tauri::State<AppState>, id: i64) -> Result<(
 #[tauri::command]
 fn import_folder(state: tauri::State<AppState>, folder_path: String, group_id: i64) -> Result<Vec<db::Sticker>, String> {
     let config = state.config.lock().map_err(|e| e.to_string())?;
-    let dest_dir = PathBuf::from(&config.sticker_save_path);
-    fs_ops::ensure_dir(&dest_dir)?;
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+
+    let group_name = db.get_group_name(group_id).map_err(|e| e.to_string())?;
+    let base_dir = fs_ops::group_dir(&config.sticker_save_path, &group_name);
+    fs_ops::ensure_dir(&base_dir)?;
 
     let entries = std::fs::read_dir(&folder_path).map_err(|e| e.to_string())?;
     let valid_ext = ["png", "jpg", "jpeg", "bmp", "gif", "webp"];
 
     let mut stickers: Vec<db::Sticker> = Vec::new();
-    let db = state.db.lock().map_err(|e| e.to_string())?;
 
     for entry in entries {
         let entry = entry.map_err(|e| e.to_string())?;
         let path = entry.path();
-        if !path.is_file() { continue; }
-        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
-        if !valid_ext.contains(&ext.as_str()) { continue; }
 
-        let new_path = fs_ops::copy_sticker_to_storage(&path.to_string_lossy(), &dest_dir)?;
-        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("sticker");
-        let id = db.add_sticker(&new_path, stem, group_id).map_err(|e| e.to_string())?;
-        stickers.push(db::Sticker {
-            id,
-            image_path: new_path,
-            tags: stem.to_string(),
-            group_id,
-            created_at: chrono::Local::now().to_rfc3339(),
-            sort_order: 0,
-        });
+        if path.is_dir() {
+            let sub_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("Imported");
+            let dest_dir = fs_ops::group_dir(&config.sticker_save_path, sub_name);
+            let sub_id = db.add_group(sub_name).map_err(|e| e.to_string())?;
+            fs_ops::ensure_dir(&dest_dir)?;
+            let sub_entries = std::fs::read_dir(&path).map_err(|e| e.to_string())?;
+            for sub_entry in sub_entries {
+                let sub_entry = sub_entry.map_err(|e| e.to_string())?;
+                let sub_path = sub_entry.path();
+                if !sub_path.is_file() { continue; }
+                let ext = sub_path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+                if !valid_ext.contains(&ext.as_str()) { continue; }
+                let new_path = fs_ops::copy_sticker_to_storage(&sub_path.to_string_lossy(), &dest_dir)?;
+                let stem = sub_path.file_stem().and_then(|s| s.to_str()).unwrap_or("sticker");
+                let sid = db.add_sticker(&new_path, stem, sub_id).map_err(|e| e.to_string())?;
+                stickers.push(db::Sticker {
+                    id: sid,
+                    image_path: new_path,
+                    tags: stem.to_string(),
+                    group_id: sub_id,
+                    created_at: chrono::Local::now().to_rfc3339(),
+                    sort_order: 0,
+                });
+            }
+        } else if path.is_file() {
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+            if !valid_ext.contains(&ext.as_str()) { continue; }
+            let new_path = fs_ops::copy_sticker_to_storage(&path.to_string_lossy(), &base_dir)?;
+            let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("sticker");
+            let id = db.add_sticker(&new_path, stem, group_id).map_err(|e| e.to_string())?;
+            stickers.push(db::Sticker {
+                id,
+                image_path: new_path,
+                tags: stem.to_string(),
+                group_id,
+                created_at: chrono::Local::now().to_rfc3339(),
+                sort_order: 0,
+            });
+        }
     }
 
     Ok(stickers)
@@ -228,6 +322,51 @@ fn cleanup_invalid_stickers(state: tauri::State<AppState>) -> Result<String, Str
     Ok(format!("Removed {} missing sticker(s)", removed))
 }
 
+fn needs_migration(save_path: &PathBuf, db: &db::StickerDb) -> Result<bool, String> {
+    let all = db.get_stickers(None).map_err(|e| e.to_string())?;
+    for s in &all {
+        if let Some(parent) = PathBuf::from(&s.image_path).parent() {
+            if parent == save_path {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn migrate_to_group_subdirs(config: &config::AppConfig, db: &db::StickerDb) -> Result<usize, String> {
+    let save_path = PathBuf::from(&config.sticker_save_path);
+    let all = db.get_stickers(None).map_err(|e| e.to_string())?;
+    let mut count = 0;
+
+    for sticker in &all {
+        let img_path = PathBuf::from(&sticker.image_path);
+        let parent = match img_path.parent() {
+            Some(p) => p.to_path_buf(),
+            None => continue,
+        };
+
+        if parent != save_path {
+            continue;
+        }
+
+        let group_name = db.get_group_name(sticker.group_id).map_err(|e| e.to_string())?;
+        let target_dir = fs_ops::group_dir(&config.sticker_save_path, &group_name);
+        fs_ops::ensure_dir(&target_dir)?;
+
+        let new_path = target_dir.join(img_path.file_name().unwrap_or_default());
+        let new_path_str = new_path.to_string_lossy().to_string();
+
+        if img_path.exists() {
+            std::fs::rename(&img_path, &new_path).map_err(|e| e.to_string())?;
+        }
+        db.update_sticker_path(sticker.id, &new_path_str).map_err(|e| e.to_string())?;
+        count += 1;
+    }
+
+    Ok(count)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -246,6 +385,21 @@ pub fn run() {
             fs_ops::ensure_dir(&PathBuf::from(&config.sticker_save_path)).ok();
 
             let db = db::StickerDb::new(&PathBuf::from(&config.db_path)).map_err(|e| e.to_string())?;
+
+            // Ensure all group directories exist
+            let all_groups = db.get_groups(false).map_err(|e| e.to_string())?;
+            for g in &all_groups {
+                let dir = fs_ops::group_dir(&config.sticker_save_path, &g.name);
+                fs_ops::ensure_dir(&dir).ok();
+            }
+
+            // Migrate existing flat stickers into group subdirectories
+            let save_path = PathBuf::from(&config.sticker_save_path);
+            if needs_migration(&save_path, &db).unwrap_or(false) {
+                if let Ok(count) = migrate_to_group_subdirs(&config, &db) {
+                    dbg!("Migrated {} stickers to group subdirectories", count);
+                }
+            }
 
             app.manage(AppState {
                 db: Mutex::new(db),

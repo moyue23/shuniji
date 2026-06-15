@@ -31,7 +31,6 @@ impl StickerDb {
         let conn = Connection::open(db_path)?;
         let db = Self { conn };
         db.init_tables()?;
-        db.ensure_default_group()?;
         db.cleanup_invalid_stickers()?;
         Ok(db)
     }
@@ -59,19 +58,6 @@ impl StickerDb {
             [],
         )?;
 
-        Ok(())
-    }
-
-    fn ensure_default_group(&self) -> Result<()> {
-        // Migrate: rename old "Ungrouped" to "My Stickers"
-        self.conn.execute(
-            "UPDATE groups SET name = 'My Stickers' WHERE id = 0 AND name = 'Ungrouped'",
-            [],
-        )?;
-        self.conn.execute(
-            "INSERT OR IGNORE INTO groups (id, name, icon_path) VALUES (0, 'My Stickers', '')",
-            [],
-        )?;
         Ok(())
     }
 
@@ -231,14 +217,20 @@ impl StickerDb {
         Ok(())
     }
 
-    pub fn delete_group(&self, id: i64) -> Result<()> {
-        self.conn.execute(
-            "UPDATE stickers SET group_id = 0 WHERE group_id = ?1",
-            params![id],
-        )?;
+    pub fn delete_group(&self, id: i64) -> Result<Vec<String>> {
+        // Collect sticker file paths before deletion
+        let mut stmt = self.conn.prepare("SELECT image_path FROM stickers WHERE group_id = ?1")?;
+        let paths: Vec<String> = stmt
+            .query_map(params![id], |row| row.get(0))?
+            .collect::<Result<Vec<String>>>()?;
+
+        // Delete all stickers in this group
+        self.conn
+            .execute("DELETE FROM stickers WHERE group_id = ?1", params![id])?;
+        // Delete the group
         self.conn
             .execute("DELETE FROM groups WHERE id = ?1", params![id])?;
-        Ok(())
+        Ok(paths)
     }
 
     pub fn get_image_path(&self, id: i64) -> Result<String> {
@@ -260,5 +252,26 @@ impl StickerDb {
             rusqlite::params![old_prefix, new_prefix, format!("{}%", old_prefix)],
         )?;
         Ok(count)
+    }
+
+    pub fn get_group_name(&self, id: i64) -> Result<String> {
+        self.conn
+            .query_row("SELECT name FROM groups WHERE id = ?1", params![id], |row| row.get(0))
+    }
+
+    pub fn get_sticker(&self, id: i64) -> Result<Sticker> {
+        self.conn.query_row(
+            "SELECT id, image_path, tags, group_id, created_at, sort_order FROM stickers WHERE id = ?1",
+            params![id],
+            Self::map_sticker,
+        )
+    }
+
+    pub fn update_sticker_path(&self, id: i64, new_path: &str) -> Result<()> {
+        self.conn.execute(
+            "UPDATE stickers SET image_path = ?1 WHERE id = ?2",
+            params![new_path, id],
+        )?;
+        Ok(())
     }
 }

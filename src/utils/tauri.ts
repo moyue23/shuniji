@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { open, confirm } from "@tauri-apps/plugin-dialog";
+import { open, confirm, message } from "@tauri-apps/plugin-dialog";
 import type { Sticker, StickerGroup, AppSettings } from "../types";
 
 export const initApp = () => invoke<AppSettings>("init_app");
@@ -56,6 +56,9 @@ export const migrateStickerStorage = (newFolder: string) =>
 
 export const confirmDialog = (message: string, title: string) =>
   confirm(message, title);
+
+export const alertDialog = (msg: string, title: string) =>
+  message(msg, title);
 
 export const cleanupInvalidStickers = () =>
   invoke<string>("cleanup_invalid_stickers");

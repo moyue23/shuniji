@@ -72,3 +72,33 @@ fn copy_dir_recursive(base: &Path, current: &Path, dest_base: &Path) -> Result<u
 
     Ok(count)
 }
+
+pub fn sanitize_dirname(name: &str) -> String {
+    name.chars()
+        .map(|c| if matches!(c, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') { '_' } else { c })
+        .collect()
+}
+
+pub fn move_file(src: &str, dst: &str) -> Result<(), String> {
+    let src_path = Path::new(src);
+    let dst_path = Path::new(dst);
+    if !src_path.exists() {
+        return Err(format!("Source file does not exist: {}", src));
+    }
+    if let Some(parent) = dst_path.parent() {
+        ensure_dir(&parent.to_path_buf())?;
+    }
+    fs::rename(src_path, dst_path).map_err(|e| e.to_string())
+}
+
+pub fn delete_empty_dir(path: &PathBuf) -> Result<(), String> {
+    if path.exists() && path.is_dir() && fs::read_dir(path).map(|mut e| e.next().is_none()).unwrap_or(false) {
+        fs::remove_dir(path).map_err(|e| e.to_string())
+    } else {
+        Ok(())
+    }
+}
+
+pub fn group_dir(sticker_save_path: &str, group_name: &str) -> PathBuf {
+    PathBuf::from(sticker_save_path).join(sanitize_dirname(group_name))
+}

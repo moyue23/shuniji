@@ -28,12 +28,12 @@ export default function Sidebar() {
       dispatch({ type: "SET_CURRENT_GROUP", payload: group.id });
       await loadStickers(group.id);
     } catch (e) {
-      alert("Failed to create group. Name may already exist.");
+      await api.alertDialog("Failed to create group. Name may already exist.", "Error");
     }
   };
 
   const handleDeleteGroup = async (id: number) => {
-    if (!confirm("Delete this group? Stickers will remain in All view.")) return;
+    if (!await api.confirmDialog("Delete this group and all its stickers? This cannot be undone.", "Delete Group")) return;
     await api.deleteGroup(id);
     dispatch({ type: "REMOVE_GROUP", payload: id });
     if (state.currentGroupId === id) {
