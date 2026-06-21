@@ -2,6 +2,10 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+fn default_language() -> String {
+    "en".to_string()
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
     pub sticker_save_path: String,
@@ -11,6 +15,8 @@ pub struct AppConfig {
     pub hotkey_enabled: bool,
     pub theme_color: String,
     pub software_version: String,
+    #[serde(default = "default_language")]
+    pub language: String,
 }
 
 impl Default for AppConfig {
@@ -23,6 +29,7 @@ impl Default for AppConfig {
             hotkey_enabled: true,
             theme_color: "#004e27".to_string(),
             software_version: "0.1.0".to_string(),
+            language: "en".to_string(),
         }
     }
 }
@@ -55,6 +62,7 @@ impl AppConfig {
         Self {
             sticker_save_path: app_data_dir.join("stickers").to_string_lossy().to_string(),
             db_path: app_data_dir.join("stickers.db").to_string_lossy().to_string(),
+            language: "en".to_string(),
             ..Default::default()
         }
     }

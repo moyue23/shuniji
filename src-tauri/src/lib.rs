@@ -9,6 +9,7 @@ mod clipboard;
 mod config;
 mod db;
 mod fs_ops;
+mod i18n;
 
 pub struct AppState {
     pub db: Mutex<db::StickerDb>,
@@ -311,15 +312,18 @@ fn migrate_sticker_storage(state: tauri::State<AppState>, new_folder: String) ->
 
     config.sticker_save_path = new_folder;
     config.save(&state.app_data_dir).map_err(|e| e.to_string())?;
+    let lang = config.language.clone();
+    drop(config);
 
-    Ok(format!("Copied {} files, updated {} database records", file_count, updated))
+    Ok(i18n::migrate_result(&lang, file_count, updated))
 }
 
 #[tauri::command]
 fn cleanup_invalid_stickers(state: tauri::State<AppState>) -> Result<String, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let removed = db.cleanup_invalid_stickers().map_err(|e| e.to_string())?;
-    Ok(format!("Removed {} missing sticker(s)", removed))
+    let lang = state.config.lock().map_err(|e| e.to_string())?.language.clone();
+    Ok(i18n::cleanup_result(&lang, removed))
 }
 
 fn needs_migration(save_path: &PathBuf, db: &db::StickerDb) -> Result<bool, String> {
@@ -401,14 +405,16 @@ pub fn run() {
                 }
             }
 
+            let lang = config.language.clone();
+
             app.manage(AppState {
                 db: Mutex::new(db),
                 config: Mutex::new(config),
                 app_data_dir: app_data_dir.clone(),
             });
 
-            let show_item = MenuItemBuilder::with_id("show", "Open").build(app)?;
-            let quit_item = MenuItemBuilder::with_id("quit", "Exit").build(app)?;
+            let show_item = MenuItemBuilder::with_id("show", i18n::tray_open(&lang)).build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", i18n::tray_exit(&lang)).build(app)?;
             let menu = MenuBuilder::new(app).items(&[&show_item, &quit_item]).build()?;
 
             let _tray = TrayIconBuilder::new()

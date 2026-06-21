@@ -21,4 +21,5 @@ export interface AppSettings {
   hotkey_enabled: boolean;
   theme_color: string;
   software_version: string;
+  language: string;
 }
