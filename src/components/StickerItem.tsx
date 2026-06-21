@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { ImageOff, X } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import { useT } from "../i18n";
 import * as api from "../utils/tauri";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { useToast } from "./common/Toast";
@@ -18,6 +19,7 @@ interface Props {
 
 export default function StickerItem({ sticker, onReorder }: Props) {
   const { state, dispatch } = useApp();
+  const { t } = useT();
   const { toast } = useToast();
   const [imgError, setImgError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -28,7 +30,7 @@ export default function StickerItem({ sticker, onReorder }: Props) {
   const handleCopy = useCallback(async () => {
     try {
       await api.copyStickerToClipboard(sticker.id);
-      toast("Copied!");
+      toast(t("common.copied"));
     } catch (e) {
       console.error("Copy failed:", e);
     }
@@ -36,7 +38,7 @@ export default function StickerItem({ sticker, onReorder }: Props) {
 
   const handleDelete = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!await api.confirmDialog("Delete this sticker?", "Delete Sticker")) return;
+    if (!await api.confirmDialog(t("item.confirmDelete"), t("item.confirmDeleteTitle"))) return;
     await api.deleteSticker(sticker.id);
     dispatch({ type: "REMOVE_STICKER", payload: sticker.id });
   }, [sticker.id, dispatch]);
@@ -86,7 +88,7 @@ export default function StickerItem({ sticker, onReorder }: Props) {
         />
       )}
       {isGif && (
-        <div className="px-3 py-2 text-xs font-medium text-text-secondary truncate text-center">GIF</div>
+        <div className="px-3 py-2 text-xs font-medium text-text-secondary truncate text-center">{t("common.gif")}</div>
       )}
       {state.editMode && (
         <button

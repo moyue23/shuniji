@@ -1,20 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
+import { useT, SUPPORTED_LOCALES } from "../i18n";
 import * as api from "../utils/tauri";
 import { getStoredTheme, setTheme, type Theme } from "../utils/theme";
 import type { AppSettings } from "../types";
 
-const THEME_OPTIONS: { value: Theme; label: string }[] = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
-
 export default function SettingsPage() {
   const { state, dispatch, refreshAll } = useApp();
+  const { t, locale, setLocale } = useT();
   const [config, setConfig] = useState(state.settings);
   const [theme, setThemeState] = useState<Theme>(getStoredTheme);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+
+  const themeOptions = useMemo(() => [
+    { value: "system" as Theme, label: t("settings.themeSystem") },
+    { value: "light" as Theme, label: t("settings.themeLight") },
+    { value: "dark" as Theme, label: t("settings.themeDark") },
+  ], [t]);
 
   useEffect(() => {
     if (!config) {
@@ -38,8 +40,8 @@ export default function SettingsPage() {
     if (!folder || !config) return;
 
     const confirmed = await api.confirmDialog(
-      "Move existing sticker files from the old location to the new folder?",
-      "Migrate files?"
+      t("settings.confirmMigrate"),
+      t("settings.confirmMigrateTitle")
     );
     if (confirmed) {
       try {
@@ -47,7 +49,7 @@ export default function SettingsPage() {
         setStatusMsg(result);
         await refreshAll();
       } catch (e) {
-        setStatusMsg(`Migration failed: ${e}`);
+        setStatusMsg(t("settings.migrationFailed", String(e)));
         return;
       }
     } else {
@@ -55,33 +57,33 @@ export default function SettingsPage() {
       setConfig(updated);
       await api.saveConfig(updated);
       dispatch({ type: "SET_SETTINGS", payload: updated });
-      setStatusMsg("Save path updated (files not moved).");
+      setStatusMsg(t("settings.savePathUpdated"));
     }
     const refreshed = await api.getConfig();
     setConfig(refreshed);
   };
 
-  if (!config) return <div className="settings p-8 overflow-y-auto h-full">Loading...</div>;
+  if (!config) return <div className="settings p-8 overflow-y-auto h-full">{t("common.loading")}</div>;
 
   return (
     <div className="settings p-8 overflow-y-auto h-full">
-      <h2 className="mb-8 text-2xl font-semibold tracking-[-0.01em] leading-8 text-text-main">Settings</h2>
+      <h2 className="mb-8 text-2xl font-semibold tracking-[-0.01em] leading-8 text-text-main">{t("settings.title")}</h2>
 
       <section>
-        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">Paths</h3>
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">{t("settings.paths")}</h3>
         <div className="flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
-          <span className="shrink-0">Sticker save path</span>
+          <span className="shrink-0">{t("settings.stickerSavePath")}</span>
           <input className="flex-1 min-w-0 px-3 py-1.5 rounded-md bg-surface-container-lowest text-text-muted text-xs font-mono border border-border-subtle outline-none cursor-default select-all" type="text" readOnly value={config.sticker_save_path} title={config.sticker_save_path} />
-          <button className="shrink-0 px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={handleChangeStickerPath}>Choose Folder</button>
+          <button className="shrink-0 px-3.5 py-1.5 border border-border-subtle rounded-md bg-surface-container-lowest text-text-main cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:border-primary hover:text-primary" onClick={handleChangeStickerPath}>{t("settings.chooseFolder")}</button>
         </div>
       </section>
 
       <section>
-        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">Appearance</h3>
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">{t("settings.appearance")}</h3>
         <div className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
-          <span>Theme</span>
+          <span>{t("settings.theme")}</span>
           <div className="flex gap-1 bg-surface-soft rounded-md p-0.75">
-            {THEME_OPTIONS.map((opt) => (
+            {themeOptions.map((opt) => (
               <button
                 key={opt.value}
                 className={`px-3.5 py-1.25 border-none rounded-sm cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:text-text-main ${theme === opt.value ? "bg-primary text-on-primary shadow-sm" : "bg-transparent text-text-muted"}`}
@@ -95,12 +97,28 @@ export default function SettingsPage() {
             ))}
           </div>
         </div>
+
+        {/* Language switcher */}
+        <div className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
+          <span>{t("settings.language")}</span>
+          <div className="flex gap-1 bg-surface-soft rounded-md p-0.75">
+            {SUPPORTED_LOCALES.map((l) => (
+              <button
+                key={l}
+                className={`px-3.5 py-1.25 border-none rounded-sm cursor-pointer text-xs font-semibold font-body transition-all duration-150 hover:text-text-main ${locale === l ? "bg-primary text-on-primary shadow-sm" : "bg-transparent text-text-muted"}`}
+                onClick={() => setLocale(l)}
+              >
+                {{ en: "EN", "zh-CN": "简中", "zh-TW": "繁中", ja: "日本語", ko: "한국어" }[l]}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section>
-        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">Window</h3>
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">{t("settings.window")}</h3>
         <label className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
-          <span>Enable tray</span>
+          <span>{t("settings.enableTray")}</span>
           <input
             className="size-5 cursor-pointer accent-primary"
             type="checkbox"
@@ -109,7 +127,7 @@ export default function SettingsPage() {
           />
         </label>
         <label className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
-          <span>Auto-start on boot</span>
+          <span>{t("settings.autostart")}</span>
           <input
             className="size-5 cursor-pointer accent-primary"
             type="checkbox"
@@ -118,7 +136,7 @@ export default function SettingsPage() {
           />
         </label>
         <label className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
-          <span>Enable global hotkey (Ctrl+Shift+E)</span>
+          <span>{t("settings.hotkey")}</span>
           <input
             className="size-5 cursor-pointer accent-primary"
             type="checkbox"
@@ -129,7 +147,7 @@ export default function SettingsPage() {
       </section>
 
       <section>
-        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">About</h3>
+        <h3 className="mt-7 mb-4 text-xs font-medium text-text-muted uppercase tracking-wider">{t("settings.about")}</h3>
         <div className="flex items-center justify-between px-4 py-3.5 rounded-lg text-sm font-medium transition-colors duration-150 hover:bg-surface-soft mt-1">
           <a
             className="text-primary no-underline font-semibold hover:underline"
@@ -147,7 +165,7 @@ export default function SettingsPage() {
       )}
 
       <button className="mt-8 px-8 py-3 border-none rounded-xl bg-primary text-on-primary cursor-pointer text-sm font-bold tracking-[0.02em] font-body shadow-btn transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_12px_28px_rgba(93,57,223,0.35)] hover:-translate-y-0.5" onClick={handleSave}>
-        Save Settings
+        {t("settings.saveSettings")}
       </button>
     </div>
   );

@@ -1,10 +1,12 @@
 import { useCallback } from "react";
 import { useApp } from "../context/AppContext";
+import { useT } from "../i18n";
 import * as api from "../utils/tauri";
 import StickerItem from "./StickerItem";
 
 export default function StickerGrid() {
   const { state, dispatch } = useApp();
+  const { t } = useT();
 
   const handleReorder = useCallback(
     async (draggedId: number, targetId: number) => {
@@ -37,9 +39,9 @@ export default function StickerGrid() {
 
   return (
     <div className="min-h-full" onDragOver={handleDragOver}>
-      {state.loading && <div className="text-center px-10 py-20 text-text-muted text-base font-medium">Loading...</div>}
+      {state.loading && <div className="text-center px-10 py-20 text-text-muted text-base font-medium">{t("common.loading")}</div>}
       {!state.loading && state.stickers.length === 0 && (
-        <div className="text-center px-10 py-20 text-text-muted text-base font-medium">No stickers yet. Drag images here or use "+ Sticker".</div>
+        <div className="text-center px-10 py-20 text-text-muted text-base font-medium">{t("grid.empty")}</div>
       )}
       <div className="sticker-grid gap-6">
         {state.stickers.map((sticker) => (

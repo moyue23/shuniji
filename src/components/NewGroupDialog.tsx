@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FolderOpen, Plus } from "lucide-react";
+import { useT } from "../i18n";
 
 interface Props {
   onClose: () => void;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function NewGroupDialog({ onClose, onCreate }: Props) {
+  const { t } = useT();
   const [name, setName] = useState("");
   const [folderPath, setFolderPath] = useState<string | null>(null);
 
@@ -24,18 +26,18 @@ export default function NewGroupDialog({ onClose, onCreate }: Props) {
         className="bg-surface-container-lowest rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.2)] p-6 w-[380px] max-w-[90vw] border border-border-subtle flex flex-col gap-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold text-text-main tracking-[-0.01em]">New Group</h3>
+        <h3 className="text-lg font-bold text-text-main tracking-[-0.01em]">{t("newGroup.title")}</h3>
 
         {/* Group name */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Name
+            {t("common.name")}
           </label>
           <input
             className="px-3 py-2.5 border border-border-subtle rounded-lg text-sm font-body bg-surface-soft outline-none transition-colors duration-200 focus:border-primary focus:shadow-[0_0_0_3px_rgba(93,57,223,0.1)] text-text-main"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Group name"
+            placeholder={t("newGroup.namePlaceholder")}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             autoFocus
           />
@@ -44,7 +46,7 @@ export default function NewGroupDialog({ onClose, onCreate }: Props) {
         {/* Import folder */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Import Folder <span className="font-normal normal-case tracking-normal text-text-muted/60">(optional)</span>
+            {t("newGroup.importFolder")} <span className="font-normal normal-case tracking-normal text-text-muted/60">{t("newGroup.optional")}</span>
           </label>
           {folderPath ? (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-surface-soft text-sm text-text-secondary">
@@ -67,7 +69,7 @@ export default function NewGroupDialog({ onClose, onCreate }: Props) {
               }}
             >
               <FolderOpen size={16} />
-              Choose folder
+              {t("newGroup.chooseFolder")}
             </button>
           )}
         </div>
@@ -78,7 +80,7 @@ export default function NewGroupDialog({ onClose, onCreate }: Props) {
             className="px-5 py-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-soft transition-all cursor-pointer"
             onClick={onClose}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-bold shadow-btn transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_8px_24px_rgba(93,57,223,0.35)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
@@ -86,7 +88,7 @@ export default function NewGroupDialog({ onClose, onCreate }: Props) {
             disabled={!name.trim()}
           >
             <Plus size={16} />
-            Create
+            {t("common.create")}
           </button>
         </div>
       </div>

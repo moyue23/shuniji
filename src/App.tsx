@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Pencil, Plus, RefreshCw, Search, X } from "lucide-react";
 import { useApp } from "./context/AppContext";
+import { useT } from "./i18n";
 import * as api from "./utils/tauri";
 import { initTheme } from "./utils/theme";
 import Sidebar from "./components/Sidebar";
@@ -12,6 +13,7 @@ import "./App.css";
 
 function App() {
   const { state, dispatch, loadGroups, loadStickers, refreshAll } = useApp();
+  const { t } = useT();
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -81,7 +83,7 @@ function App() {
         <header className="h-20 bg-(--header-bg) backdrop-blur-md border-b border-border-subtle flex items-center px-8 gap-6 z-50 shrink-0">
           <div className="flex gap-3 shrink-0">
             <button className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-subtle rounded-xl bg-surface-container-lowest cursor-pointer text-sm font-bold tracking-[0.02em] font-body text-primary whitespace-nowrap shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md" onClick={handleAddSticker}>
-              <Plus size={18} /> Sticker
+              <Plus size={18} /> {t("app.addSticker")}
             </button>
             <button className="inline-flex items-center gap-2 px-4 py-2.5 border border-border-subtle rounded-xl bg-surface-container-lowest cursor-pointer text-sm font-bold tracking-[0.02em] font-body text-text-main whitespace-nowrap shadow-sm transition-all duration-200 hover:border-primary hover:text-primary hover:shadow-md" onClick={async () => { await api.cleanupInvalidStickers(); await refreshAll(); }}>
               <RefreshCw size={18} />
@@ -96,7 +98,7 @@ function App() {
                 className="w-full bg-surface-soft border-none rounded-full py-3 pl-11 pr-4 text-base font-body text-text-main outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 placeholder:text-text-muted/70 hover:bg-surface-container-low focus:bg-surface-container-lowest focus:shadow-[0_0_0_3px_rgba(93,57,223,0.12),0_4px_20px_rgba(93,57,223,0.08)]"
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Search stickers..."
+                placeholder={t("app.searchPlaceholder")}
               />
             </div>
           </div>
@@ -105,7 +107,7 @@ function App() {
               className={`inline-flex items-center gap-2 px-5 py-2.5 border rounded-xl cursor-pointer text-sm font-bold tracking-[0.02em] font-body whitespace-nowrap transition-all duration-200 ${state.editMode ? "bg-primary text-on-primary border-primary shadow-btn" : "bg-surface-container-lowest text-primary border-border-subtle shadow-sm hover:border-primary hover:shadow-md"}`}
               onClick={() => dispatch({ type: "TOGGLE_EDIT_MODE" })}
             >
-              {state.editMode ? <><X size={16} /> Exit</> : <><Pencil size={16} /> Edit</>}
+              {state.editMode ? <><X size={16} /> {t("app.exitEditMode")}</> : <><Pencil size={16} /> {t("app.editMode")}</>}
             </button>
           </div>
         </header>

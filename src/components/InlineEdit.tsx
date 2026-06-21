@@ -9,9 +9,13 @@ interface InlineEditProps {
   trigger?: number;
   /** Allow clicking to enter edit mode. Default true. */
   clickToEdit?: boolean;
+  /** Fallback text shown when value is empty. Default "Untitled". */
+  placeholder?: string;
+  /** Tooltip for click-to-edit hint. Default "Click to rename". */
+  clickToRenameTitle?: string;
 }
 
-export default function InlineEdit({ value, onSave, className, inputClassName, trigger, clickToEdit = true }: InlineEditProps) {
+export default function InlineEdit({ value, onSave, className, inputClassName, trigger, clickToEdit = true, placeholder = "Untitled", clickToRenameTitle = "Click to rename" }: InlineEditProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,8 +65,8 @@ export default function InlineEdit({ value, onSave, className, inputClassName, t
   }
 
   return (
-    <span className={className} onClick={clickToEdit ? () => setEditing(true) : undefined} title={clickToEdit ? "Click to rename" : undefined}>
-      {value || "Untitled"}
+    <span className={className} onClick={clickToEdit ? () => setEditing(true) : undefined} title={clickToEdit ? clickToRenameTitle : undefined}>
+      {value || placeholder}
     </span>
   );
 }

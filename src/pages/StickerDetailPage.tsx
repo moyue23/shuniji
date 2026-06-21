@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { ArrowLeft, Clipboard, Plus, X, ImageOff } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import { useT } from "../i18n";
 import * as api from "../utils/tauri";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InlineEdit from "../components/InlineEdit";
@@ -10,6 +11,7 @@ const MAX_TAGS = 10;
 
 export default function StickerDetailPage() {
   const { state, dispatch } = useApp();
+  const { t } = useT();
   const { toast } = useToast();
   const sticker = state.stickers.find((s) => s.id === state.detailStickerId);
   const [imgError, setImgError] = useState(false);
@@ -31,7 +33,7 @@ export default function StickerDetailPage() {
     if (!sticker) return;
     try {
       await api.copyStickerToClipboard(sticker.id);
-      toast("Copied!");
+      toast(t("common.copied"));
     } catch (e) {
       console.error("Copy failed:", e);
     }
@@ -70,7 +72,7 @@ export default function StickerDetailPage() {
   if (!sticker) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <span className="text-text-muted">Sticker not found.</span>
+        <span className="text-text-muted">{t("detail.notFound")}</span>
       </div>
     );
   }
@@ -87,16 +89,16 @@ export default function StickerDetailPage() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border-subtle rounded-lg bg-surface-container-lowest cursor-pointer text-sm font-medium text-text-main transition-all duration-200 hover:border-primary hover:text-primary"
           onClick={handleBack}
         >
-          <ArrowLeft size={16} /> Back
+          <ArrowLeft size={16} /> {t("common.back")}
         </button>
         <span className="flex-1 text-sm text-text-muted truncate">
-          {sticker.tags || "Untitled"}
+          {sticker.tags || t("common.untitled")}
         </span>
         <button
           className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border-subtle rounded-lg bg-surface-container-lowest cursor-pointer text-sm font-medium text-text-main transition-all duration-200 hover:border-primary hover:text-primary"
           onClick={handleCopy}
         >
-          <Clipboard size={14} /> Copy
+          <Clipboard size={14} /> {t("common.copy")}
         </button>
       </div>
 
@@ -107,7 +109,7 @@ export default function StickerDetailPage() {
           {imgError ? (
             <div className="flex flex-col items-center gap-3 text-text-muted opacity-40">
               <ImageOff size={80} />
-              <span className="text-sm">Image failed to load</span>
+              <span className="text-sm">{t("detail.imageError")}</span>
             </div>
           ) : (
             <img
@@ -126,11 +128,13 @@ export default function StickerDetailPage() {
           {/* Name */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Name
+              {t("common.name")}
             </label>
             <InlineEdit
-              value={sticker.tags || "Untitled"}
+              value={sticker.tags || t("common.untitled")}
               onSave={handleRename}
+              placeholder={t("common.untitled")}
+              clickToRenameTitle={t("inlineEdit.clickToRename")}
               className="text-sm font-medium text-text-main cursor-pointer transition-colors duration-150 hover:text-primary block"
               inputClassName="text-sm font-medium text-text-main border-b border-primary outline-none w-full font-body"
             />
@@ -139,7 +143,7 @@ export default function StickerDetailPage() {
           {/* Created at */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Saved
+              {t("detail.saved")}
             </label>
             <span className="text-sm text-text-secondary">
               {createdDate}
@@ -149,14 +153,14 @@ export default function StickerDetailPage() {
           {/* GIF badge */}
           {isGif && (
             <span className="inline-flex self-start px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-container text-primary">
-              GIF
+              {t("common.gif")}
             </span>
           )}
 
           {/* Tags */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Tags
+              {t("detail.tags")}
               <span className="ml-1 font-normal normal-case tracking-normal text-text-muted/60">
                 ({tags.length}/{MAX_TAGS})
               </span>
@@ -178,7 +182,7 @@ export default function StickerDetailPage() {
               ))}
               {tags.length === 0 && (
                 <span className="text-xs text-text-muted italic py-1">
-                  No tags yet
+                  {t("detail.noTags")}
                 </span>
               )}
             </div>
@@ -188,7 +192,7 @@ export default function StickerDetailPage() {
                   className="flex-1 px-3 py-1.5 border border-border-subtle rounded-md text-xs font-body bg-surface-container-lowest outline-none transition-colors duration-200 focus:border-primary focus:shadow-[0_0_0_3px_rgba(93,57,223,0.1)]"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  placeholder="New tag..."
+                  placeholder={t("detail.newTagPlaceholder")}
                   onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
                 />
                 <button

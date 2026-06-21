@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Folder, Images, Plus, Settings } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import { useT } from "../i18n";
 import * as api from "../utils/tauri";
 import ContextMenu, { type ContextMenuItem } from "./ContextMenu";
 import InlineEdit from "./InlineEdit";
@@ -8,6 +9,7 @@ import NewGroupDialog from "./NewGroupDialog";
 
 export default function Sidebar() {
   const { state, dispatch, loadStickers } = useApp();
+  const { t } = useT();
   const [showNewGroup, setShowNewGroup] = useState(false);
 
   const handleCreateGroup = async (name: string, folderPath: string | null) => {
@@ -28,12 +30,12 @@ export default function Sidebar() {
       dispatch({ type: "SET_CURRENT_GROUP", payload: group.id });
       await loadStickers(group.id);
     } catch (e) {
-      await api.alertDialog("Failed to create group. Name may already exist.", "Error");
+      await api.alertDialog(t("sidebar.errorCreateGroup"), t("common.error"));
     }
   };
 
   const handleDeleteGroup = async (id: number) => {
-    if (!await api.confirmDialog("Delete this group and all its stickers? This cannot be undone.", "Delete Group")) return;
+    if (!await api.confirmDialog(t("sidebar.confirmDeleteGroup"), t("sidebar.confirmDeleteGroupTitle"))) return;
     await api.deleteGroup(id);
     dispatch({ type: "REMOVE_GROUP", payload: id });
     if (state.currentGroupId === id) {
@@ -96,7 +98,7 @@ export default function Sidebar() {
           }}
         >
           <Images className="w-5 h-5 shrink-0" />
-          <span>All</span>
+          <span>{t("sidebar.all")}</span>
         </div>
 
         {/* Groups */}
@@ -121,8 +123,8 @@ export default function Sidebar() {
                   x: e.clientX,
                   y: e.clientY,
                   items: [
-                    { label: "Rename", action: () => setRenamingId(g.id) },
-                    { label: "Delete", action: () => handleDeleteGroup(g.id), danger: true },
+                    { label: t("common.rename"), action: () => setRenamingId(g.id) },
+                    { label: t("common.delete"), action: () => handleDeleteGroup(g.id), danger: true },
                   ],
                 });
               }}
@@ -133,6 +135,8 @@ export default function Sidebar() {
                 onSave={(name) => handleRenameGroup(g.id, name)}
                 trigger={renamingId === g.id ? 1 : 0}
                 clickToEdit={false}
+                placeholder={t("common.untitled")}
+                clickToRenameTitle={t("inlineEdit.clickToRename")}
                 className="truncate"
                 inputClassName="flex-1 px-1 py-0.5 rounded text-sm font-bold font-body bg-surface-container-lowest border border-primary outline-none min-w-0"
               />
@@ -149,7 +153,7 @@ export default function Sidebar() {
           onClick={() => setShowNewGroup(true)}
         >
           <Plus className="w-5 h-5 shrink-0" />
-          <span>New Group</span>
+          <span>{t("sidebar.newGroup")}</span>
         </button>
 
         {/* Settings */}
@@ -162,7 +166,7 @@ export default function Sidebar() {
           onClick={() => dispatch({ type: "SET_CURRENT_GROUP", payload: -1 })}
         >
           <Settings className="w-5 h-5 shrink-0" />
-          <span>Settings</span>
+          <span>{t("sidebar.settings")}</span>
         </div>
       </div>
 
